@@ -64,7 +64,14 @@ def run(config):
     for seed in config["seeds"]:
         seed_everything(seed); model,toks=build(config); model.to(device)
         loaders={n:DataLoader(TextDataset(split_frame(df,splits,n),toks,config["max_len"]), batch_size=config["batch_size"], shuffle=n=="train") for n in splits}
-        counts=split_frame(df,splits,"train").label.value_counts(); weights=torch.tensor([len(split_frame(df,splits,"train"))/(2*counts.get(i,1)) for i in range(2)],device=device)
+        counts=split_frame(df,splits,"train").label.value_counts()
+        # Python division produces float64 values; CrossEntropyLoss requires weights
+        # to match the float32 logits unless mixed precision has explicitly changed them.
+        weights=torch.tensor(
+            [len(split_frame(df,splits,"train")) / (2 * counts.get(i, 1)) for i in range(2)],
+            dtype=torch.float32,
+            device=device,
+        )
         opt=AdamW(model.parameters(),lr=float(config["lr"]),weight_decay=float(config["weight_decay"])); total=len(loaders["train"])*config["epochs"]
         sched=get_linear_schedule_with_warmup(opt,int(total*config["warmup_ratio"]),total); loss_fn=CrossEntropyLoss(weight=weights)
         best=-1; stale=0; checkpoint=out/f"{config['model']}_seed{seed}.pt"
