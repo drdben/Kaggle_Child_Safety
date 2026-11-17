@@ -1,0 +1,20 @@
+model: hybrid
+model_names: {muril: google/muril-base-cased, xlmr: xlm-roberta-base}
+data_csv: AnnotationFinal.csv
+splits_path: data/splits.json
+output_dir: outputs/metrics
+max_len: 128
+batch_size: 11
+lr: 3.0e-5
+weight_decay: 0.01
+warmup_ratio: 0.10
+grad_clip: 1.0
+epochs: 3
+patience: 1
+dropout: 0.1
+seeds: [13, 42, 2024]
+ig_steps: 50
+word_aggregation: sum
+normalization: l1
+hybrid_lambda: 0.5
+mixed_precision: auto
